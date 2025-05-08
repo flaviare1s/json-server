@@ -1,5 +1,12 @@
 window.onload = () => {
   carregarVagas();
+
+  const candidatosVisiveis = localStorage.getItem("candidatosVisiveis")
+  if(candidatosVisiveis) {
+    const container = document.getElementById("candidates")
+    container.style.display = "flex"
+    carregarCandidatos()
+  }
 };
 
 async function carregarVagas() {
@@ -35,6 +42,8 @@ function mostrarVagas(vagas) {
 }
 
 function carregarCandidatos() {
+  const container = document.getElementById('candidates')
+  container.style.display = 'flex'
   axios
     .get("http://localhost:3000/users")
     .then((res) => mostrarCandidatos(res.data))
@@ -52,8 +61,8 @@ function mostrarCandidatos(candidatos) {
           <h5 class="card-title">${user.name}</h5>
           <h6 class="card-subtitle mb-2 text-muted">${user.email}</h6>
           <div class="mt-3">
-            <button class="btn btn-sm btn-warning me-2" onclick="abrirModalUsuario('editar', '${user.id}')">Editar</button>
-            <button class="btn btn-sm btn-danger" onclick="excluirUsuario('${user.id}')">Excluir</button>
+            <button type="button" class="btn btn-sm btn-warning me-2" onclick="abrirModalUsuario('editar', '${user.id}')">Editar</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="excluirUsuario('${user.id}')">Excluir</button>
           </div>
         </div>
       </div>
@@ -75,6 +84,8 @@ function abrirModalUsuario(acao, id = null) {
       confirmButtonText: 'Salvar',
       focusConfirm: false,
       showCloseButton: true,
+      alllowEscapeKey: false,
+      allowOutsideClick: false,
       preConfirm: () => {
         const name = document.getElementById('swal-nome').value.trim();
         const email = document.getElementById('swal-email').value.trim();
@@ -87,6 +98,7 @@ function abrirModalUsuario(acao, id = null) {
         return {name, email}; // Retorna os dados que serão enviados ao backend
       }
     }).then(result => {
+      console.log("Resultado: ", result)
       if(!result.isConfirmed) return;
       const url = id? `http://localhost:3000/users/${id}` : `http://localhost:3000/users/`
       const metodo = id ? axios.put : axios.post;
@@ -94,7 +106,6 @@ function abrirModalUsuario(acao, id = null) {
       metodo(url, result.value)
       .then(() => {
         Swal.fire('Sucesso', `Candidato ${id ? 'atualizado' : 'cadastrado'}!`, 'success')
-        carregarCandidatos();
       }).catch(() => {
         mostrarErro('Não foi possível salvar!')
       })
@@ -113,13 +124,17 @@ function abrirModalUsuario(acao, id = null) {
 
 window.createUser = () => abrirModalUsuario('novo');
 
-let candidatosVisiveis = false;
-
 function alternarCandidatos() {
   const container = document.getElementById("candidates");
-  candidatosVisiveis = !candidatosVisiveis;
-  container.style.display = candidatosVisiveis ? "flex" : "none";
-  if (candidatosVisiveis) carregarCandidatos();
+  const visivel = container.style.display === "flex"
+  if(visivel) {
+    container.style.display = "none"
+    localStorage.setItem("candidatosVisiveis", false)
+  } else {
+    container.style.display = "flex"
+    localStorage.setItem("candidatosVisiveis", true)
+    carregarCandidatos()
+  }
 }
 
 function toggleCandidates() {
@@ -140,9 +155,6 @@ function excluirUsuario(id) {
       .delete(`http://localhost:3000/users/${id}`)
       .then(() => {
         Swal.fire("Excluído!", " ", "Success");
-      })
-      .then(() => {
-        carregarCandidatos();
       })
       .catch(() => mostrarErro("Não foi possível excluir!"));
   });
