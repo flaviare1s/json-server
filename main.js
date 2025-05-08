@@ -8,8 +8,11 @@ window.onload = () => {
   });
 
   const candidatosVisiveis = localStorage.getItem("candidatosVisiveis");
+  const container = document.getElementById("candidates");
+
+  container.style.display = "none";
+
   if (candidatosVisiveis) {
-    const container = document.getElementById("candidates");
     container.style.display = "flex";
     carregarCandidatos();
   }
@@ -90,7 +93,7 @@ function abrirModalUsuario(acao, id = null) {
       confirmButtonText: "Salvar",
       focusConfirm: false,
       showCloseButton: true,
-      alllowEscapeKey: false,
+      allowEscapeKey: false,
       allowOutsideClick: false,
       didOpen: () => {
         const btn = Swal.getConfirmButton();
@@ -121,7 +124,8 @@ function abrirModalUsuario(acao, id = null) {
             title: "Sucesso",
             text: `Candidato ${id ? "atualizado" : "cadastrado"}!`,
             icon: "success",
-            timer: 9000,
+            timer: 2000,
+            timerProgressBar: true,
             showConfirmButton: false,
           });
         })
@@ -179,7 +183,8 @@ function excluirUsuario(id) {
         Swal.fire({
           title: "Excluído",
           icon: "success",
-          timer: 3000,
+          timer: 2000,
+          timerProgressBar: true,
           showConfirmButton: false,
         });
       })
