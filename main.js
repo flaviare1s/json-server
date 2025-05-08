@@ -65,7 +65,7 @@ function mostrarCandidatos(candidatos) {
 
 function abrirModalUsuario(acao, id = null) {
   const titulo = acao == "editar" ? "Editar Candidato" : "Novo Candidato";
-  const exibirFormulario = (name = '', email = '') => {
+  const exibirFormulario = (name = '', email = '', id = null) => {
     Swal.fire({
       title: titulo,
       html: `
@@ -74,6 +74,7 @@ function abrirModalUsuario(acao, id = null) {
       `,
       confirmButtonText: 'Salvar',
       focusConfirm: false,
+      showCloseButton: true,
       preConfirm: () => {
         const name = document.getElementById('swal-nome').value.trim();
         const email = document.getElementById('swal-email').value.trim();
@@ -95,7 +96,7 @@ function abrirModalUsuario(acao, id = null) {
         Swal.fire('Sucesso', `Candidato ${id ? 'atualizado' : 'cadastrado'}!`, 'success')
         carregarCandidatos();
       }).catch(() => {
-        mostrarErro('Nâo foi possível salvar!')
+        mostrarErro('Não foi possível salvar!')
       })
     })
   };
@@ -103,23 +104,27 @@ function abrirModalUsuario(acao, id = null) {
   if (acao === "editar" && id) {
     axios
       .get(`http://localhost:3000/users/${id}`)
-      .then((res) => exibirFormulario(res.data.name, res.data.email))
+      .then((res) => exibirFormulario(res.data.name, res.data.email, id))
       .catch(() => mostrarErro("Usuário não encontrado!"));
   } else {
-    exibirFormulario();
+    exibirFormulario('', '', null);
   }
 }
 
 window.createUser = () => abrirModalUsuario('novo');
 
 let candidatosVisiveis = false;
+
 function alternarCandidatos() {
   const container = document.getElementById("candidates");
   candidatosVisiveis = !candidatosVisiveis;
   container.style.display = candidatosVisiveis ? "flex" : "none";
   if (candidatosVisiveis) carregarCandidatos();
 }
-window.toggleCandidates = alternarCandidatos;
+
+function toggleCandidates() {
+  alternarCandidatos()
+}
 
 function excluirUsuario(id) {
   Swal.fire({
@@ -135,6 +140,9 @@ function excluirUsuario(id) {
       .delete(`http://localhost:3000/users/${id}`)
       .then(() => {
         Swal.fire("Excluído!", " ", "Success");
+      })
+      .then(() => {
+        carregarCandidatos();
       })
       .catch(() => mostrarErro("Não foi possível excluir!"));
   });
