@@ -1,11 +1,17 @@
 window.onload = () => {
   carregarVagas();
 
-  const candidatosVisiveis = localStorage.getItem("candidatosVisiveis")
-  if(candidatosVisiveis) {
-    const container = document.getElementById("candidates")
-    container.style.display = "flex"
-    carregarCandidatos()
+  document.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+    });
+  });
+
+  const candidatosVisiveis = localStorage.getItem("candidatosVisiveis");
+  if (candidatosVisiveis) {
+    const container = document.getElementById("candidates");
+    container.style.display = "flex";
+    carregarCandidatos();
   }
 };
 
@@ -42,8 +48,8 @@ function mostrarVagas(vagas) {
 }
 
 function carregarCandidatos() {
-  const container = document.getElementById('candidates')
-  container.style.display = 'flex'
+  const container = document.getElementById("candidates");
+  container.style.display = "flex";
   axios
     .get("http://localhost:3000/users")
     .then((res) => mostrarCandidatos(res.data))
@@ -74,42 +80,58 @@ function mostrarCandidatos(candidatos) {
 
 function abrirModalUsuario(acao, id = null) {
   const titulo = acao == "editar" ? "Editar Candidato" : "Novo Candidato";
-  const exibirFormulario = (name = '', email = '', id = null) => {
+  const exibirFormulario = (name = "", email = "", id = null) => {
     Swal.fire({
       title: titulo,
       html: `
         <input id="swal-nome" class="swal2-input" placeholder="Nome" value="${name}">
         <input id="swal-email" class="swal2-input" placeholder="Email" value="${email}">
       `,
-      confirmButtonText: 'Salvar',
+      confirmButtonText: "Salvar",
       focusConfirm: false,
       showCloseButton: true,
       alllowEscapeKey: false,
       allowOutsideClick: false,
+      didOpen: () => {
+        const btn = Swal.getConfirmButton();
+        btn.setAttribute("type", "button");
+      },
       preConfirm: () => {
-        const name = document.getElementById('swal-nome').value.trim();
-        const email = document.getElementById('swal-email').value.trim();
+        const name = document.getElementById("swal-nome").value.trim();
+        const email = document.getElementById("swal-email").value.trim();
 
-        if(!name || !email) {
-          Swal.showValidationMessage('Preencha todos os campos')
+        if (!name || !email) {
+          Swal.showValidationMessage("Preencha todos os campos");
           return false;
         }
 
-        return {name, email}; // Retorna os dados que serão enviados ao backend
-      }
-    }).then(result => {
-      console.log("Resultado: ", result)
-      if(!result.isConfirmed) return;
-      const url = id? `http://localhost:3000/users/${id}` : `http://localhost:3000/users/`
+        return { name, email }; // Retorna os dados que serão enviados ao backend
+      },
+    }).then((result) => {
+      console.log("Resultado: ", result);
+      if (!result.isConfirmed) return;
+      const url = id
+        ? `http://localhost:3000/users/${id}`
+        : `http://localhost:3000/users/`;
       const metodo = id ? axios.put : axios.post;
 
       metodo(url, result.value)
-      .then(() => {
-        Swal.fire('Sucesso', `Candidato ${id ? 'atualizado' : 'cadastrado'}!`, 'success')
-      }).catch(() => {
-        mostrarErro('Não foi possível salvar!')
-      })
-    })
+        .then(() => {
+          Swal.fire({
+            title: "Sucesso",
+            text: `Candidato ${id ? "atualizado" : "cadastrado"}!`,
+            icon: "success",
+            timer: 9000,
+            showConfirmButton: false,
+          });
+        })
+        .then(() => {
+          carregarCandidatos();
+        })
+        .catch(() => {
+          mostrarErro("Não foi possível salvar!");
+        });
+    });
   };
 
   if (acao === "editar" && id) {
@@ -118,27 +140,27 @@ function abrirModalUsuario(acao, id = null) {
       .then((res) => exibirFormulario(res.data.name, res.data.email, id))
       .catch(() => mostrarErro("Usuário não encontrado!"));
   } else {
-    exibirFormulario('', '', null);
+    exibirFormulario("", "", null);
   }
 }
 
-window.createUser = () => abrirModalUsuario('novo');
+window.createUser = () => abrirModalUsuario("novo");
 
 function alternarCandidatos() {
   const container = document.getElementById("candidates");
-  const visivel = container.style.display === "flex"
-  if(visivel) {
-    container.style.display = "none"
-    localStorage.setItem("candidatosVisiveis", false)
+  const visivel = container.style.display === "flex";
+  if (visivel) {
+    container.style.display = "none";
+    localStorage.setItem("candidatosVisiveis", false);
   } else {
-    container.style.display = "flex"
-    localStorage.setItem("candidatosVisiveis", true)
-    carregarCandidatos()
+    container.style.display = "flex";
+    localStorage.setItem("candidatosVisiveis", true);
+    carregarCandidatos();
   }
 }
 
 function toggleCandidates() {
-  alternarCandidatos()
+  alternarCandidatos();
 }
 
 function excluirUsuario(id) {
@@ -154,7 +176,15 @@ function excluirUsuario(id) {
     axios
       .delete(`http://localhost:3000/users/${id}`)
       .then(() => {
-        Swal.fire("Excluído!", " ", "Success");
+        Swal.fire({
+          title: "Excluído",
+          icon: "success",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+      })
+      .then(() => {
+        carregarCandidatos();
       })
       .catch(() => mostrarErro("Não foi possível excluir!"));
   });
